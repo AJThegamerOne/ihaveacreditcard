@@ -1,4 +1,22 @@
+# Python
 __pycache__/
 *.py[co]
 .venv/
 venv/
+
+# Rust build output (Cargo.lock is intentionally kept for reproducible builds)
+**/target/
+*.rs.bk
+
+# Nix
+result
+result-*
+
+# Local state / secrets / backups
+*.log
+*.bak
+*.secret
+*.token
+.env
+.env.*
+.DS_Store

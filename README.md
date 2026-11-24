@@ -22,9 +22,24 @@ your own keys; not affiliated with nintendo, obviously.
 
 ## easy mode
 
-clone this repo and run:
+**Already have Nix?** the flake runs the pc-side scripts with zero setup:
 
+```sh
+nix run github:AJThegamerOne/ihaveacreditcard -- --check   # setup check
+nix run github:AJThegamerOne/ihaveacreditcard              # guided TUI
+nix run github:AJThegamerOne/ihaveacreditcard#doctor       # doctor on its own
 ```
+
+Other flake apps: `#make-cifinish`, `#inspect-title-db`, and `nix develop` for
+the full dev shell. These provide the Python tools only — `custominstall`,
+`save3ds_fuse`, `decryptor-tui`, `makerom` and your own keys are still needed
+for real installs (see [setup](#setup)).
+
+**Plain Linux checkout:**
+
+```sh
+git clone https://github.com/AJThegamerOne/ihaveacreditcard.git
+cd ihaveacreditcard
 python3 scripts/tui.py
 ```
 
@@ -32,8 +47,9 @@ it checks your keys, finds mounted sd card candidates, installs dumps,
 **decrypts dumps pc-side**, lists what's on the card, **uninstalls titles**,
 and can write `cifinish.bin` for the finalize step — guided menus all the way,
 with a plain numbered-menu fallback (`--plain`) for weird terminals.
-`install.sh` bootstraps a fresh linux box (distro packages, save3ds build, the
-vendored decryptor, venv).
+`./install.sh` bootstraps a fresh Linux box (distro packages, save3ds build,
+the vendored decryptor + makerom/ctrtool, and a Python venv). Use
+`./install.sh --check` to run the doctor without changing anything.
 
 ## setup
 
@@ -171,7 +187,8 @@ db realities) plus the fixes this repo routes around them are written up in
   custominstall, **decryptor-tui and makerom** actually execute, and that the
   card is mounted writable.
   `--strict` turns warnings into failures for scripting; the tui's menu has
-  the same check, and `python3 scripts/tui.py --check` runs it non-interactively
+  the same check, and `python3 scripts/tui.py --check` (or `./install.sh --check`)
+  runs it non-interactively. With Nix, use `nix run .#doctor`.
 - `scripts/make_cifinish.py` — non-interactive way to write a fresh
   `cifinish.bin` listing only the titles you pass
 - `scripts/inspect_title_db.py` — decodes the 128-byte title entries save3ds
@@ -186,7 +203,11 @@ db realities) plus the fixes this repo routes around them are written up in
   or artix — plus xbps/emerge, and manual hints on nixos), save3ds build,
   **vendored decryptor + makerom/ctrtool builds**, python venv with
   custom-install (`--dry-run` to preview, `--no-decryptor` to skip the rust
-  part). zero systemd is used anywhere in the toolkit.
+  part). zero systemd is used anywhere in the toolkit
+- `flake.nix` — Nix apps for every script (`nix run .#doctor`,
+  `#make-cifinish`, `#inspect-title-db`), a `nix develop` shell with the full
+  Rust/Linux toolchain, and a pinned `flake.lock`. The apps run straight from
+  the flake source, so they work from any directory
 
 ## cifinish.bin (v3) format
 

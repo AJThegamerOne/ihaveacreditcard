@@ -12,6 +12,8 @@
 #   ./install.sh --no-sudo    don't call sudo (you'll need packages installed already)
 #   ./install.sh --skip-tui   don't offer the tui at the end
 #   ./install.sh --no-decryptor  skip the decryptor/decryptor-tui/makerom builds
+#   ./install.sh --check      just run the setup check and exit
+#   ./install.sh --help       show this help
 # extras you can set: CC_SRC_DIR=/somewhere (where the save3ds source is cloned)
 
 set -euo pipefail
@@ -19,19 +21,41 @@ set -euo pipefail
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="${HOME}/.venvs/custom-install"
 BIN_DIR="${HOME}/.local/bin"
+# Make binaries installed by this script visible to the later checks in *this*
+# run, even when the user's shell rc hasn't been reloaded yet.
+case ":$PATH:" in
+  *":$BIN_DIR:"*) ;;
+  *) export PATH="$BIN_DIR:$PATH" ;;
+esac
 SRC_DIR="${CC_SRC_DIR:-${XDG_CACHE_HOME:-$HOME/.cache}/ihaveacreditcard}"
 PART_URL="https://github.com/ihaveamac/custom-install/archive/refs/heads/python-package.zip"
 SAVE3DS_URL="https://github.com/wwylele/save3ds.git"
 KEYS_GUIDE="https://wiki.hacks.guide/wiki/3DS:Dump_system_files"
 
-DRY_RUN=0 NO_SUDO=0 SKIP_TUI=0 NO_DECRYPTOR=0
+usage() {
+  cat <<'EOF'
+Usage: ./install.sh [OPTIONS]
+
+  (no options)     full setup, then offer to start the TUI
+  --dry-run        print what would happen, touch nothing
+  --no-sudo        skip privileged package installation
+  --skip-tui       don't offer the TUI at the end
+  --no-decryptor   skip the vendored decryptor / makerom builds
+  --check          run the setup check only and exit
+  --help           show this help
+EOF
+}
+
+DRY_RUN=0 NO_SUDO=0 SKIP_TUI=0 NO_DECRYPTOR=0 CHECK_ONLY=0
 for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY_RUN=1 ;;
     --no-sudo) NO_SUDO=1 ;;
     --skip-tui|--no-tui) SKIP_TUI=1 ;;
     --no-decryptor) NO_DECRYPTOR=1 ;;
-    *) echo "unknown option: $arg (try --dry-run / --no-sudo / --skip-tui / --no-decryptor)" >&2; exit 2 ;;
+    --check) CHECK_ONLY=1 ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "unknown option: $arg (try --help)" >&2; exit 2 ;;
   esac
 done
 
@@ -141,12 +165,12 @@ check_python() {
 
 setup_toolchain() {
   info "python toolchain → $VENV_DIR"
-  if [ -x "$VENV_DIR/bin/custominstall" ]; then
-    run "$VENV_DIR/bin/pip" install --upgrade "$PART_URL"
+  if [ -x "$VENV_DIR/bin/python" ]; then
+    info "venv already exists — refreshing custom-install"
   else
     run python3 -m venv "$VENV_DIR"
-    run "$VENV_DIR/bin/pip" install --upgrade "$PART_URL"
   fi
+  run "$VENV_DIR/bin/pip" install --upgrade "$PART_URL"
 }
 
 setup_save3ds() {
@@ -206,11 +230,8 @@ check_keys() {
 # cli, decryptor-tui = the batch decryptor UI. makerom/ctrtool come from
 # Project_CTR and are what decryptor-tui calls for the final repack step.
 # ---------------------------------------------------------------- decryptor
-# the vendored rust decryptor (decryptor/README.md): ctrdecrypt = library +
-# cli, decryptor-tui = the batch decryptor UI. makerom/ctrtool come from
-# Project_CTR and are what decryptor-tui calls for the final repack step.
 setup_decryptor() {
-  if [ -x "$HOME/.cargo/bin/decryptor-tui" ] || have decryptor-tui; then
+  if [ -x "$BIN_DIR/decryptor-tui" ] || [ -x "$HOME/.cargo/bin/decryptor-tui" ] || have decryptor-tui; then
     info "decryptor-tui already available"
     return
   fi
@@ -258,6 +279,12 @@ tilde2() { printf '%s' "${1/#$HOME/~}"; }
 main() {
   [ "$(id -u)" -eq 0 ] && warn "you're root — stuff will end up in root's home; usually not what you want"
   info "ihaveacreditcard bootstrap (linux only)"
+  if [ "$CHECK_ONLY" = 1 ]; then
+    check_python
+    check_keys
+    run python3 "$REPO_DIR/scripts/tui.py" --check
+    return
+  fi
   detect_pm
   install_pkgs
   check_python
