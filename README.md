@@ -1,4 +1,17 @@
+<div align="center">
+
 # ihaveacreditcard
+
+**Install, decrypt, inspect, and remove 3DS titles from a Linux PC — guided menus the whole way.**
+
+[![Linux](https://img.shields.io/badge/PC-Linux-FCC624?logo=linux&logoColor=black)](#)
+[![Python](https://img.shields.io/badge/Python-3.9%2B-3776AB?logo=python&logoColor=white)](#)
+[![Nix flake](https://img.shields.io/badge/Nix-flake-5277C3?logo=nixos&logoColor=white)](flake.nix)
+[![CI](https://github.com/AJThegamerOne/ihaveacreditcard/actions/workflows/ci.yml/badge.svg)](https://github.com/AJThegamerOne/ihaveacreditcard/actions/workflows/ci.yml)
+
+[Quick start](#quick-start) · [Setup](#setup) · [Scripts](#scripts) · [cifinish format](#cifinishbin-v3-format)
+
+</div>
 
 installing 3ds games onto an sd card from a linux pc.
 
@@ -20,9 +33,9 @@ macos, but every command, path and script here is written around a linux pc.
 you need a luma3ds console (hbl or hbmenu reachable). dump your own games and
 your own keys; not affiliated with nintendo, obviously.
 
-## easy mode
+## quick start
 
-**Already have Nix?** the flake runs the pc-side scripts with zero setup:
+**Already have Nix?** The flake runs the PC-side scripts with zero setup:
 
 ```sh
 nix run github:AJThegamerOne/ihaveacreditcard -- --check   # setup check
